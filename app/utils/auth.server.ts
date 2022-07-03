@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { UserValidator } from "./validator.server";
+import { LoginValidator, RegisterValidator } from "./validator.server";
 
 import type { RegisterForm, LoginForm } from "~/utils/types.server";
 import { prisma } from "~/utils/prisma.server";

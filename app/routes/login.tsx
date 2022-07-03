@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import type { ActionFunction } from "@remix-run/node";
 import { Layout } from "~/components/Layout";
 import FormField from "~/components/FormField";
-import { UserValidator } from "~/utils/validator.server";
+import { LoginValidator, RegisterValidator } from "~/utils/validator.server";
 
 export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData();
@@ -11,6 +11,16 @@ export const action: ActionFunction = async ({ request }) => {
   const password = form.get("password");
   let firstName = form.get("firstName");
   let lastName = form.get("lastName");
+
+  const Validator = action === "login" ? LoginValidator : RegisterValidator;
+
+  const { success, data, error } = Validator.safeParse({
+    action,
+    email,
+    password,
+    firstName,
+    lastName,
+  });
 };
 
 export default memo(function Login() {
