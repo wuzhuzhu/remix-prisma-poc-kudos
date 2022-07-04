@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { LoginValidator, RegisterValidator } from "./validator.server";
+import type { LoginFormTYpe, RegisterFormType } from "./validator.server";
 
 import type { RegisterForm, LoginForm } from "~/utils/types.server";
 import { prisma } from "~/utils/prisma.server";
@@ -9,6 +9,66 @@ import { createUser } from "~/utils/users.server";
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
   throw new Error("SESSION_SECRET must be set");
+}
+
+export async function requireUserId(
+  request: Request,
+  redirectTo: string = new URL(request.url).pathname
+) {
+  const session = await getUserSession(request);
+  const userId = session.get("userId");
+  console.log("userId", userId, typeof userId);
+  if (!userId) {
+    const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
+    throw redirect(`/login?${searchParams}`);
+  }
+  return userId;
+}
+
+function getUserSession(request: Request) {
+  return storage.getSession(request.headers.get("Cookie"));
+}
+
+async function getUserId(request: Request) {
+  const session = await getUserSession(request);
+  const userId = session.get("userId");
+  if (!userId) return null;
+  return userId;
+}
+
+export async function getUser(request: Request) {
+  const userId = await getUserId(request);
+  if (typeof userId !== "number") {
+    return null;
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        profile: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+    return user;
+  } catch {
+    throw logout(request);
+  }
+}
+
+export async function logout(request: Request) {
+  const session = await getUserSession(request);
+  return redirect("/login", {
+    headers: {
+      "Set-Cookie": await storage.destroySession(session),
+    },
+  });
 }
 
 const storage = createCookieSessionStorage({
@@ -33,7 +93,7 @@ export async function createUserSession(userId: number, redirectTo: string) {
   });
 }
 
-export async function login({ email, password }: LoginForm) {
+export async function login({ email, password }: LoginFormTYpe) {
   const user = await prisma.user.findUnique({
     where: { email },
   });
@@ -44,7 +104,7 @@ export async function login({ email, password }: LoginForm) {
   return createUserSession(user.id, "/");
 }
 
-export async function register(user: RegisterForm) {
+export async function register(user: RegisterFormType) {
   const exists = await prisma.user.count({
     where: {
       email: user.email,

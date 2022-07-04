@@ -1,4 +1,5 @@
-import {memo} from "react"
+import { memo } from "react";
+import type { ZodIssue } from "zod";
 
 interface FormFieldProps {
   htmlFor: string;
@@ -6,6 +7,7 @@ interface FormFieldProps {
   type?: string;
   value: any;
   onChange: (...args: any) => any;
+  errors?: ZodIssue[];
 }
 
 const FormField: React.FC<FormFieldProps> = ({
@@ -13,7 +15,7 @@ const FormField: React.FC<FormFieldProps> = ({
   type,
   value,
   label,
-  onChange
+  onChange,
 }) => {
   return (
     <>
@@ -30,6 +32,6 @@ const FormField: React.FC<FormFieldProps> = ({
       />
     </>
   );
-}
+};
 
 export default memo(FormField);
