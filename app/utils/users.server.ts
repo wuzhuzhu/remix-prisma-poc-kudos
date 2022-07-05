@@ -26,6 +26,9 @@ export const getOtherUsers = async (userId: number) => {
         not: userId,
       },
     },
+    include: {
+      profile: true,
+    },
     orderBy: {
       profile: {
         firstName: "asc",
